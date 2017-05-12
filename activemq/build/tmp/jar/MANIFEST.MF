@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Target-Compatibility: 1.8
-Build-Date: 2017-05-12T13:17:26+0800
-Built-OS: Windows 7/6.1
-Built-By: Administrator
-Source-Compatibility: 1.8
-Rev-Revision: 1.0.0
-Built-JDK: 1.8.0_91
-
