@@ -1,0 +1,109 @@
+
+buildscript {
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE")
+    }
+}
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'spring-boot'
+
+group = 'com.sxshunrj.test.springboot.activemq'
+version = '1.0.0'
+
+[compileJava, compileTestJava, compileGroovy, compileTestGroovy, javadoc]*.options*.encoding = 'UTF-8'
+
+test {
+    jvmArgs '-noverify'
+}
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+configurations {
+    compile.exclude module: 'slf4j-nop'
+    compile.exclude module: 'logback-classic'
+}
+
+dependencies {
+	compile fileTree(dir: "$buildDir/../lib", includes: ['*.jar'])
+    compile 'org.springframework.boot:spring-boot'
+    compile 'org.springframework.boot:spring-boot-starter-activemq'
+
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'com.alibaba:fastjson:1.2.4'
+    testCompile 'junit:junit:4.12'
+}
+
+jar {
+    exclude 'application.properties'
+    exclude 'log4j2.xml'
+
+    manifest {
+        attributes 'Build-Date': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                   'Built-By': System.getProperty('user.name'),
+                   'Built-JDK': System.getProperty('java.version'),
+                   'Built-OS': "${System.getProperty('os.name')}/${System.getProperty('os.version')}",
+                   'Source-Compatibility': sourceCompatibility,
+                   'Target-Compatibility': targetCompatibility,
+                   'Rev-Revision': version
+                   //'Git-Revision': 'git rev-parse HEAD'.execute().text.trim(),
+                   //'Git-Branch': 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+    }
+}
+
+task deploy(dependsOn: jar) {
+
+    jar.doLast {
+
+        delete {
+            "$buildDir/deploy_server"
+        }
+
+        copy {
+            from "$buildDir/libs"
+            from configurations.runtime
+            into "$buildDir/deploy_server/lib"
+        }
+
+        copy {
+            from 'src/main/resources'
+            exclude 'template_parse_config'
+            into "$buildDir/deploy_server/classes"
+        }
+
+        copy {
+            from 'template'
+            into "$buildDir/deploy_server/template"
+        }
+
+        copy {
+            from 'cfg'
+            into "$buildDir/deploy_server/cfg"
+        }
+
+        copy {
+            from 'server'
+            into "$buildDir/deploy_server"
+        }
+    }
+
+}
+
+task createDirs() {
+   sourceSets*.java.srcDirs*.each { it.mkdirs() }
+   sourceSets*.groovy.srcDirs*.each { it.mkdirs() }
+   sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+}
+
+task libs(type: Sync) {
+    from configurations.runtime
+    into "$buildDir/libs"
+}
+
+jar.into('static') {
+    from('src/main/webapp')
+}
